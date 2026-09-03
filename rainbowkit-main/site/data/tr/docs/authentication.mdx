@@ -1,0 +1,185 @@
+---
+title: Kimlik Doğrulama
+description: Kullanıcılarınızın kimlik doğrulaması
+---
+
+# Kimlik Doğrulama
+
+## Uygulamanıza kimlik doğrulamalı erişim sağlama
+
+İsteğe bağlı olarak, kullanıcıların bağlantı süreci sırasında cüzdanlarıyla bir mesaj imzalamasını şart koşabilirsiniz, böylece bağlı hesabın sahibi olduklarını kanıtlarlar ve uygulamanıza ayrıcalıklı erişimi olan bir kimlik doğrulamalı kullanıcı oturumu oluşturabilirsiniz.
+
+Özel back-end'lerle ve mesaj formatlarıyla [entegrasyon yapmak mümkün olsa da,](/docs/custom-authentication) RainbowKit öncelikli olarak [Ethereum ile Giriş Yapma](https://login.xyz) ve [NextAuth](https://next-auth.js.org) için destek sağlar.
+
+### Ethereum ve NextAuth ile Giriş Yapmayı Ayarlayın
+
+#### Install
+
+`@rainbow-me/rainbowkit-siwe-next-auth` paketini ve NextAuth v5'i kurun.
+
+```bash
+npm install @rainbow-me/rainbowkit-siwe-next-auth next-auth@5.0.0-beta.31
+```
+
+Mevcut bir NextAuth v4 SIWE entegrasyonunu yükseltiyorsanız, [NextAuth v5 geçiş rehberi](/guides/next-auth-v5)'ni takip edin.
+
+#### NextAuth kurulumu yapın.
+
+v5 `Credentials` sağlayıcısını kullanan ve `auth` yardımcısını dışa aktaran bir NextAuth yapılandırması oluşturun. `authorize` uygulamanızın, kimlik doğrulanan adresi döndürmeden önce SIWE mesajını, imzayı, alanı ve nonce'u doğrulaması gerekir.
+
+```tsx
+import NextAuth from 'next-auth';
+import type { NextAuthConfig } from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+
+export const authOptions: NextAuthConfig = {
+  providers: [
+    Credentials({
+      name: 'Ethereum',
+      credentials: {
+        message: { label: 'Message', type: 'text' },
+        signature: { label: 'Signature', type: 'text' },
+      },
+      async authorize(credentials) {
+        const siweMessage = await validateSiweCredentials(credentials);
+
+        if (!siweMessage) {
+          return null;
+        }
+
+        return {
+          id: siweMessage.address,
+        };
+      },
+    }),
+  ],
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: 'jwt',
+  },
+};
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);
+```
+
+SIWE doğrulaması, nonce kontrolleri ve sunucu tarafı doğrulama için tam [`with-next-siwe-next-auth` örneğine](https://github.com/rainbow-me/rainbowkit/tree/main/examples/with-next-siwe-next-auth) bakın.
+
+#### Sağlayıcıyı kurun
+
+`App` bileşeninizde, `RainbowKitSiweNextAuthProvider`'ı içe aktarın.
+
+```tsx
+import { RainbowKitSiweNextAuthProvider } from '@rainbow-me/rainbowkit-siwe-next-auth';
+```
+
+`RainbowKitProvider`'ı `RainbowKitSiweNextAuthProvider` ile sarmalayın, böylece oturuma erişimi olduğundan emin olun.
+
+```tsx
+import { RainbowKitSiweNextAuthProvider } from '@rainbow-me/rainbowkit-siwe-next-auth';
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { SessionProvider } from 'next-auth/react';
+import type { Session } from 'next-auth';
+import { AppProps } from 'next/app';
+import { WagmiProvider } from 'wagmi';
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
+export default function App({
+  Component,
+  pageProps,
+}: AppProps<{
+  session: Session;
+}>) {
+  return (
+    <WagmiProvider {...etc}>
+      <SessionProvider refetchInterval={0} session={pageProps.session}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitSiweNextAuthProvider>
+            <RainbowKitProvider {...etc}>
+              <Component {...pageProps} />
+            </RainbowKitProvider>
+          </RainbowKitSiweNextAuthProvider>
+        </QueryClientProvider>
+      </SessionProvider>
+    </WagmiProvider>
+  );
+}
+```
+
+`RainbowKitSiweNextAuthProvider` yerinde olduğunda, kullanıcılarınız cüzdanlarını bağladıktan sonra bir mesaj imzalamak için kimlik doğrulama istemi alacaklardır.
+
+#### SIWE mesaj seçeneklerini özelleştirin
+
+[SIWE mesaj seçeneklerini](https://viem.sh/docs/siwe/utilities/createSiweMessage#parameters) `RainbowKitSiweNextAuthProvider` üzerindeki `getSiweMessageOptions` özelliğine bir fonksiyon geçirerek özelleştirebilirsiniz.
+
+Bu fonksiyon her yeni mesaj oluşturulduğunda çağrılacaktır. Bu fonksiyondan dönen seçenekler varsayılanlarla birleştirilecektir.
+
+```tsx
+import {
+  RainbowKitSiweNextAuthProvider,
+  GetSiweMessageOptions,
+} from '@rainbow-me/rainbowkit-siwe-next-auth';
+
+const getSiweMessageOptions: GetSiweMessageOptions = () => ({
+  statement: 'Sign in to my RainbowKit app',
+});
+
+<RainbowKitSiweNextAuthProvider
+  getSiweMessageOptions={getSiweMessageOptions}
+>
+  ...
+</RainbowKitSiweNextAuthProvider>;
+```
+
+#### Oturumu sunucu tarafında erişin
+
+Oturuma, auth yapılandırmanızdan dışa aktarılan `auth` fonksiyonu ile erişebilirsiniz. Kullanıcı başarılı bir şekilde kimlik doğruladıysa, oturumun `address` özelliği kullanıcının adresi olacaktır.
+
+Ayrıca çözümlenmiş oturum nesnesini sunucudan `getServerSideProps` vasıtasıyla iletip NextAuth'ın bunu istemci üzerinde tekrar çözümlemesi gerekmemesini sağlayabilirsiniz.
+
+Örneğin:
+
+```tsx
+import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { auth } from '../auth';
+
+export const getServerSideProps: GetServerSideProps = async context => {
+  const session = await auth(context.req, context.res);
+
+  const address = session?.address ?? null;
+  // If you have a value for "address" here, your
+  // server knows the user is authenticated.
+
+  // You can then pass any data you want
+  // to the page component here.
+  return {
+    props: {
+      address,
+      session,
+    },
+  };
+};
+
+type AuthenticatedPageProps = InferGetServerSidePropsType<
+  typeof getServerSideProps
+>;
+
+export default function AuthenticatedPage({
+  address,
+}: AuthenticatedPageProps) {
+  return address ? (
+    <h1>Authenticated as {address}</h1>
+  ) : (
+    <h1>Unauthenticated</h1>
+  );
+}
+```
+
+Oturumu yönetmek hakkında daha fazla bilgi için aşağıdaki belgelere başvurabilirsiniz:
+
+- [Next.js kimlik doğrulama rehberi](https://nextjs.org/docs/app/guides/authentication)
+- [NextAuth belgeleri](https://next-auth.js.org)

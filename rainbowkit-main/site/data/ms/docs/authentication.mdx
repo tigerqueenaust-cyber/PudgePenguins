@@ -1,0 +1,185 @@
+---
+title: Pengesahan
+description: Mengesahkan pengguna anda
+---
+
+# Pengesahan
+
+## Menyediakan akses yang disahkan kepada aplikasi anda
+
+Anda boleh secara opsional menguatkuasakan bahawa pengguna menandatangani mesej dengan dompet mereka semasa proses sambungan, membuktikan bahawa mereka memiliki akaun yang disambungkan dan membolehkan anda membuat sesi pengguna yang disahkan dengan akses istimewa ke aplikasi anda.
+
+Meskipun mungkin untuk [mengintegrasikan dengan backend dan format pesan kustom,](/docs/custom-authentication) RainbowKit menyediakan dukungan kelas utama untuk [Sign-In dengan Ethereum](https://login.xyz) dan [NextAuth](https://next-auth.js.org).
+
+### Sediakan Sign-In dengan Ethereum dan NextAuth
+
+#### Pasang
+
+Pasang pakej `@rainbow-me/rainbowkit-siwe-next-auth` dan NextAuth v5.
+
+```bash
+npm install @rainbow-me/rainbowkit-siwe-next-auth next-auth@5.0.0-beta.31
+```
+
+Jika anda ingin menaik taraf integrasi NextAuth v4 SIWE yang sedia ada, ikuti [panduan migrasi NextAuth v5](/guides/next-auth-v5).
+
+#### Tetapkan NextAuth
+
+Cipta konfigurasi NextAuth yang menggunakan pembekal `Credentials` v5 dan eksport pembantu `auth`. Pelaksanaan `authorize` anda perlu mengesahkan mesej SIWE, tandatangan, domain, dan nonce sebelum mengembalikan alamat yang sudah disahkan.
+
+```tsx
+import NextAuth from 'next-auth';
+import type { NextAuthConfig } from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+
+export const authOptions: NextAuthConfig = {
+  providers: [
+    Credentials({
+      name: 'Ethereum',
+      credentials: {
+        message: { label: 'Message', type: 'text' },
+        signature: { label: 'Signature', type: 'text' },
+      },
+      async authorize(credentials) {
+        const siweMessage = await validateSiweCredentials(credentials);
+
+        if (!siweMessage) {
+          return null;
+        }
+
+        return {
+          id: siweMessage.address,
+        };
+      },
+    }),
+  ],
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: 'jwt',
+  },
+};
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);
+```
+
+Lihat [contoh lengkap `with-next-siwe-next-auth`](https://github.com/rainbow-me/rainbowkit/tree/main/examples/with-next-siwe-next-auth) untuk pengesahan SIWE, semakan nonce, dan pengesahan pelayan.
+
+#### Sediakan pengeluar
+
+Dalam komponen `App` anda, import `RainbowKitSiweNextAuthProvider`.
+
+```tsx
+import { RainbowKitSiweNextAuthProvider } from '@rainbow-me/rainbowkit-siwe-next-auth';
+```
+
+Bungkus `RainbowKitProvider` dengan `RainbowKitSiweNextAuthProvider`, pastikan ia bersarang di dalam `SessionProvider` NextAuth agar ia mempunyai akses kepada sesi.
+
+```tsx
+import { RainbowKitSiweNextAuthProvider } from '@rainbow-me/rainbowkit-siwe-next-auth';
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { SessionProvider } from 'next-auth/react';
+import type { Session } from 'next-auth';
+import { AppProps } from 'next/app';
+import { WagmiProvider } from 'wagmi';
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
+export default function App({
+  Component,
+  pageProps,
+}: AppProps<{
+  session: Session;
+}>) {
+  return (
+    <WagmiProvider {...etc}>
+      <SessionProvider refetchInterval={0} session={pageProps.session}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitSiweNextAuthProvider>
+            <RainbowKitProvider {...etc}>
+              <Component {...pageProps} />
+            </RainbowKitProvider>
+          </RainbowKitSiweNextAuthProvider>
+        </QueryClientProvider>
+      </SessionProvider>
+    </WagmiProvider>
+  );
+}
+```
+
+Dengan `RainbowKitSiweNextAuthProvider` di tempatnya, pengguna anda kini akan diminta untuk mengesahkan dengan menandatangani mesej sebaik sahaja mereka telah menyambungkan dompet mereka.
+
+#### Sesuaikan opsi mesej SIWE
+
+Anda boleh menyesuaikan [pilihan mesej SIWE](https://viem.sh/docs/siwe/utilities/createSiweMessage#parameters) dengan menyerahkan fungsi kepada prop `getSiweMessageOptions` pada `RainbowKitSiweNextAuthProvider`.
+
+Fungsi ini akan dipanggil setiap kali mesej baru dicipta. Pilihan yang dikembalikan daripada fungsi ini akan digabungkan dengan tetapan lalai.
+
+```tsx
+import {
+  RainbowKitSiweNextAuthProvider,
+  GetSiweMessageOptions,
+} from '@rainbow-me/rainbowkit-siwe-next-auth';
+
+const getSiweMessageOptions: GetSiweMessageOptions = () => ({
+  statement: 'Sign in to my RainbowKit app',
+});
+
+<RainbowKitSiweNextAuthProvider
+  getSiweMessageOptions={getSiweMessageOptions}
+>
+  ...
+</RainbowKitSiweNextAuthProvider>;
+```
+
+#### Akses pelayan sesi sebelah
+
+Anda boleh mengakses sesi menggunakan fungsi `auth` yang dieksport dari konfigurasi auth anda. Jika pengguna telah berjaya disahkan, sifat `address` sesi akan menjadi alamat pengguna.
+
+Anda juga boleh memindahkan objek sesi yang telah diselesaikan dari pelayan melalui `getServerSideProps` supaya NextAuth tidak perlu menyelesaikannya lagi pada pelanggan.
+
+Sebagai contoh:
+
+```tsx
+import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { auth } from '../auth';
+
+export const getServerSideProps: GetServerSideProps = async context => {
+  const session = await auth(context.req, context.res);
+
+  const address = session?.address ?? null;
+  // If you have a value for "address" here, your
+  // server knows the user is authenticated.
+
+  // You can then pass any data you want
+  // to the page component here.
+  return {
+    props: {
+      address,
+      session,
+    },
+  };
+};
+
+type AuthenticatedPageProps = InferGetServerSidePropsType<
+  typeof getServerSideProps
+>;
+
+export default function AuthenticatedPage({
+  address,
+}: AuthenticatedPageProps) {
+  return address ? (
+    <h1>Authenticated as {address}</h1>
+  ) : (
+    <h1>Unauthenticated</h1>
+  );
+}
+```
+
+Untuk maklumat lanjut mengenai pengurusan sesi, anda boleh merujuk kepada dokumentasi berikut:
+
+- [Panduan pengesahan Next.js](https://nextjs.org/docs/app/guides/authentication)
+- [Dokumentasi NextAuth](https://next-auth.js.org)

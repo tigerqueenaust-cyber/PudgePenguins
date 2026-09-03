@@ -1,0 +1,73 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "**",
+      "!CHANGELOG.md",
+      "!pnpm-lock.yaml",
+      "!**/package.json",
+      "!**/tsconfig.json",
+      "!**/tsconfig.*.json",
+      "!packages/create-rainbowkit/generated-test-app",
+      "!**/build",
+      "!**/.react-router",
+      "!examples/with-next-mint-nft/contract",
+      "!packages/rainbowkit/assets/wallets/registry.json",
+      "!**/next-env.d.ts"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 80
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "security": {
+        "noDangerouslySetInnerHtml": "error"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all",
+      "semicolons": "always"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "examples/**",
+        "packages/example/**",
+        "packages/create-rainbowkit/templates/**",
+        "packages/rainbowkit/src/index.ts",
+        "packages/rainbowkit/src/components/index.ts",
+        "packages/rainbowkit/src/wallets/walletConnectors/index.ts",
+        "packages/rainbow-button/src/index.ts",
+        "packages/rainbowkit-siwe-next-auth/src/index.ts"
+      ],
+      "assist": {
+        "actions": {
+          "source": {
+            "organizeImports": "off"
+          }
+        }
+      }
+    }
+  ],
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  }
+}

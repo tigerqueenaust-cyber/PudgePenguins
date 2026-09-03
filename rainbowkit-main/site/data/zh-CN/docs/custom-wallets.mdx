@@ -1,0 +1,281 @@
+---
+title: 自定义钱包
+description: 创建一个自定义钱包
+---
+
+# 自定义钱包
+
+## 创建一个自定义钱包
+
+> 注意：此API不稳定，并有可能在不久的将来发生变化。我们将逐步增加更多内置钱包。如果有任何特定的钱包感兴趣，请[让我们知道](https://github.com/rainbow-me/rainbowkit/issues) 。
+
+提供`Wallet`函数类型，以帮助您定义自己的自定义钱包。可以在`Wallet`函数的返回值上配置以下属性：
+
+### 钱包属性
+
+<PropsTable
+  data={[
+    {
+      name: 'id',
+      required: true,
+      type: 'string',
+      description: '每个钱包的唯一ID',
+    },
+    {
+      name: 'name',
+      required: true,
+      type: 'string',
+      description: '可读的钱包名称',
+    },
+    {
+      name: 'rdns',
+      required: false,
+      type: 'string',
+      description: '支持EIP6963的钱包的RDNS',
+    },
+    {
+      name: 'shortName',
+      required: false,
+      type: 'string | undefined',
+      description: '移动端使用的可选短名称',
+    },
+    {
+      name: 'iconUrl',
+      required: true,
+      type: 'string | (() => Promise<string>)',
+      description:
+        '钱包图标的URL，或解析为Base64数据URL的Promise',
+    },
+    {
+      name: 'iconAccent',
+      required: false,
+      type: 'string',
+      description:
+        '用于同时拥有浏览器扩展和移动应用的钱包下载流程中的强调颜色',
+    },
+    {
+      name: 'iconBackground',
+      required: true,
+      type: 'string',
+      description: '钱包图标加载期间的背景颜色',
+    },
+    {
+      name: 'installed',
+      required: false,
+      type: 'boolean | undefined',
+      description: (
+        <>
+          钱包是否安装，或为{' '}
+          <code>undefined</code>如果不确定
+        </>
+      ),
+    },
+    {
+      name: 'downloadUrls',
+      required: false,
+      type: '{ android?: string, ios?: string, mobile?: string, qrCode?: string, chrome?: string, firefox?: string, edge?: string, safari?: string, opera?: string, browserExtension?: string } | undefined',
+      typeSimple: 'DownloadUrls | undefined',
+      description: '包含下载URL的对象',
+    },
+    {
+      name: 'hidden',
+      required: false,
+      type: '(args: { wallets: Array<{ id: string, connector: Connector, installed?: boolean }> }) => boolean',
+      typeSimple: '(args) => boolean | undefined',
+      description:
+        '用于计算该钱包是否应从列表中隐藏的函数。这对定义通用备用钱包很有用，例如内置的“注入式钱包”备用使用此功能',
+    },
+    {
+      name: 'createConnector',
+      required: true,
+      type: '() => RainbowKitConnector',
+      typeSimple: 'RainbowKitConnector',
+      description:
+        '用于提供不同连接方法的连接器实例和配置的函数，将在下面介绍',
+    },
+    {
+      name: 'mobile',
+      required: false,
+      type: '{ getUri?: (uri: string) => string }',
+      typeSimple: 'object',
+      description:
+        '用于解析移动钱包连接URI的函数',
+    },
+    {
+      name: 'desktop',
+      required: false,
+      type: '{ getUri?: (uri: string) => string }',
+      typeSimple: 'object',
+      description: '用于解析桌面应用程序深层链接的函数',
+    },
+    {
+      name: 'qrCode',
+      required: false,
+      type: "{ getUri: (uri: string) => string, instructions?: { learnMoreUrl: string, steps: Array<{ step: 'install' | 'create' | 'scan', title: string, description: string }> }}}",
+      typeSimple: 'object',
+      description:
+        '对象中包含解析二维码URI的函数，以及可选的移动钱包设置说明',
+    },
+    {
+      name: 'extension',
+      required: false,
+      type: "{ instructions?: { learnMoreUrl: string, steps: Array<{ step: 'install' | 'create' | 'scan', title: string, description: string }> }}}",
+      typeSimple: 'object',
+      description:
+        '对象中包含可选的浏览器扩展程序安装说明',
+    },
+    {
+      name: 'createConnector',
+      required: true,
+      type: "createConnector: (details: WalletDetailsParams) => CreateConnectorFn",
+      typeSimple: '(details: WalletDetailsParams) => CreateConnectorFn',
+      description: '用于提供连接器实例的函数',
+    },
+  ]}
+/>
+
+### 下载网址属性
+
+<PropsTable
+  data={[
+    {
+      name: 'android',
+      required: false,
+      type: 'string',
+      description: 'Google Play URL',
+    },
+    {
+      name: 'ios',
+      required: false,
+      type: 'string',
+      description: 'Apple App Store URL',
+    },
+    {
+      name: 'mobile',
+      required: false,
+      type: 'string',
+      description:
+        '当`android`或`ios`不可用时移动用户的着陆页',
+    },
+    {
+      name: 'qrCode',
+      required: false,
+      type: 'string',
+      description:
+        '扫描移动下载二维码后的用户着陆页',
+    },
+    {
+      name: 'chrome',
+      required: false,
+      type: 'string',
+      description: 'Chrome Web Store URL',
+    },
+    {
+      name: 'edge',
+      required: false,
+      type: 'string',
+      description: 'Microsoft Edge Add-ons URL',
+    },
+    {
+      name: 'firefox',
+      required: false,
+      type: 'string',
+      description: 'Firefox 浏览器附加组件 URL',
+    },
+    {
+      name: 'opera',
+      required: false,
+      type: 'string',
+      description: 'Opera 附加组件 URL',
+    },
+    {
+      name: 'safari',
+      required: false,
+      type: 'string',
+      description: 'Mac App Store URL',
+    },
+    {
+      name: 'browserExtension',
+      required: false,
+      type: 'string',
+      description:
+        '桌面扩展用户的着陆页，当浏览器兼容的URL不可用时',
+    },
+  ]}
+/>
+
+### 示例
+
+例如，使用WalletConnect创建一个自定义钱包：
+
+```tsx
+import { Wallet, getWalletConnectConnector } from '@rainbow-me/rainbowkit';
+
+export interface MyWalletOptions {
+  projectId: string;
+}
+
+export const rainbow = ({ projectId }: MyWalletOptions): Wallet => ({
+  id: 'my-wallet',
+  name: 'My Wallet',
+  iconUrl: 'https://my-image.xyz',
+  iconBackground: '#0c2f78',
+  downloadUrls: {
+    android: 'https://play.google.com/store/apps/details?id=my.wallet',
+    ios: 'https://apps.apple.com/us/app/my-wallet',
+    chrome: 'https://chrome.google.com/webstore/detail/my-wallet',
+    qrCode: 'https://my-wallet/qr',
+  },
+  mobile: {
+    getUri: (uri: string) => uri,
+  },
+  qrCode: {
+    getUri: (uri: string) => uri,
+    instructions: {
+      learnMoreUrl: 'https://my-wallet/learn-more',
+      steps: [
+        {
+          description:
+            'We recommend putting My Wallet on your home screen for faster access to your wallet.',
+          step: 'install',
+          title: 'Open the My Wallet app',
+        },
+        {
+          description:
+            'After you scan, a connection prompt will appear for you to connect your wallet.',
+          step: 'scan',
+          title: 'Tap the scan button',
+        },
+      ],
+    },
+  },
+  extension: {
+    instructions: {
+      learnMoreUrl: 'https://my-wallet/learn-more',
+      steps: [
+        {
+          description:
+            'We recommend pinning My Wallet to your taskbar for quicker access to your wallet.',
+          step: 'install',
+          title: 'Install the My Wallet extension',
+        },
+        {
+          description:
+            'Be sure to back up your wallet using a secure method. Never share your secret phrase with anyone.',
+          step: 'create',
+          title: 'Create or Import a Wallet',
+        },
+        {
+          description:
+            'Once you set up your wallet, click below to refresh the browser and load up the extension.',
+          step: 'refresh',
+          title: 'Refresh your browser',
+        },
+      ],
+    },
+  },
+  createConnector: getWalletConnectConnector({ projectId }),
+});
+```
+
+然后，您可以在[钱包列表](/docs/custom-wallet-list)中添加您的自定义钱包。

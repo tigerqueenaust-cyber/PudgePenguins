@@ -1,0 +1,29 @@
+{
+  "name": "example",
+  "version": "0.0.119",
+  "description": "",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "@rainbow-me/rainbow-button": "workspace:*",
+    "@rainbow-me/rainbowkit": "workspace:*",
+    "@rainbow-me/rainbowkit-siwe-next-auth": "workspace:*",
+    "@tanstack/react-query": "^5.55.3",
+    "cuer": "^0.0.3",
+    "next": "^16.2.4",
+    "next-auth": "^5.0.0-beta.31",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "viem": "2.38.0",
+    "wagmi": "^2.19.3",
+    "mipd": "^0.0.7"
+  },
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "typecheck": "pnpm tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
